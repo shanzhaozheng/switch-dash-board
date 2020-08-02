@@ -1,0 +1,253 @@
+<template>
+    <dev>
+        <dev border style="width: 100%">
+            <el-input v-model="myLabel" @input="change($event)" placeholder="请输要切换的标签" style="width: 150px"></el-input>
+        </dev>
+        <dev style="padding: 10px">
+            <el-input v-model="myLabel" @input="change($event)" placeholder="请输要切换的标签" style="width: 150px"></el-input>
+            <el-select v-model="value1" placeholder="请选择">
+                <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                </el-option>
+            </el-select>
+            <el-button type="danger" @click="handleLabel(myLabel,value1)">根据标签信息切换</el-button>
+        </dev>
+        <el-table
+                :data="newTable"
+                :span-method="arraySpanMethod"
+                border
+                style="width: 100%">
+            <el-table-column
+                    fixed
+                    prop="className"
+                    label="控制器名称"
+                    align="center"
+                    width="300">
+            </el-table-column>
+            <el-table-column
+                    prop="status"
+                    label="控制器状态"
+                    align="center"
+                    width="120">
+            </el-table-column>
+            <el-table-column
+                    prop="subField"
+                    label="字段信息"
+                    align="center">
+                <el-table-column
+                        prop="fieldName"
+                        label="字段名称"
+                        align="center"
+                        width="120">
+                </el-table-column>
+                <el-table-column
+                        prop="label"
+                        label="对象标签"
+                        align="center"
+                        width="120">
+                </el-table-column>
+                <el-table-column
+                        prop="field_status"
+                        label="字段状态"
+                        align="center"
+                        width="120">
+                </el-table-column>
+                <el-table-column
+                        fixed="right"
+                        label="操作"
+                        width="100">
+                    <template slot-scope="scope">
+                        <el-button @click="handleClick(scope.row)" type="text" size="small">切换</el-button>
+                    </template>
+                </el-table-column>
+            </el-table-column>
+        </el-table>
+        <dev>
+            <el-radio v-model="radio" label="1">全部切换至local</el-radio>
+            <el-radio v-model="radio" label="2">全部切换至remote</el-radio>
+            <el-button type="danger" @click="handleAll(radio)">执行切换</el-button>
+        </dev>
+    </dev>
+</template>
+
+<script>
+    import Vue from "vue";
+
+    export default {
+        methods: {
+            handleAll(doswitch){
+                if (doswitch == 1){
+                    axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
+                        console.log(response)
+                    })
+                }else if (doswitch == 2){
+                    axios.get('http://localhost:8181/switch/?flag=false').then(function (response) {
+                        console.log(response)
+                    })
+                }
+                location.reload()
+            },
+            change(e){
+                this.$forceUpdate()
+            },
+            handleLabel(label,doswitch){
+                console.log(label)
+                console.log(doswitch)
+                /*axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
+                    console.log(response)
+                })*/
+                location.reload()
+
+            },
+            handleClick(row) {
+                console.log(row);
+                if (row.field_status == "FeignBus") {
+                    axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
+                        console.log(response)
+                    })
+                } else if (row.field_status == "LocalBus") {
+                    axios.get('http://localhost:8181/switch/?flag=false').then(function (response) {
+                        console.log(response)
+                    })
+                }
+                location.reload()
+            },
+            arraySpanMethod({row, column, rowIndex, columnIndex}) {
+                const _this = this
+                if (columnIndex === 0 || columnIndex === 1) {
+                    let _row = _this.spanArray[rowIndex];
+                    let _clo = _row > 0 ? 1 : 0;
+                    return {
+                        rowspan: _row,
+                        colspan: _clo
+                    }
+                }
+            },
+            handleTableData(data, _this) {
+                let newArr = [];
+                data.forEach(function (item, index) {
+                    for (let i = 0; i < item.subField.length; i++) {
+                        let current = {
+                            className: item.className,
+                            status: item.status,
+                            fieldName: item.subField[i].fieldName,
+                            label: item.subField[i].label,
+                            field_status: item.subField[i].status,
+                        }
+                        newArr.push(current)
+                    }
+                })
+                newArr.forEach(function (item, index) {
+                    if (index == 0) {
+                        _this.spanArray.push(1)
+                        _this.tabindex = 0;
+                    } else {
+                        if (item.className == newArr[index - 1].className) {
+                            _this.spanArray[item.tabindex] = _this.spanArray[item.tabindex] + 1;
+                            _this.spanArray.push(0);
+                        } else {
+                            _this.spanArray.push(1);
+                            _this.tabindex = index;
+                        }
+                    }
+                })
+                console.log(_this.spanArray)
+                return newArr;
+            },
+            setCookie: function (cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                console.info(cname + "=" + cvalue + "; " + expires);
+                document.cookie = cname + "=" + cvalue + "; " + expires;
+                console.info(document.cookie);
+            },
+            //获取cookie
+            getCookie: function (cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                console.log("获取cookie,现在循环")
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    console.log(c)
+                    while (c.charAt(0) == ' ') c = c.substring(1);
+                    if (c.indexOf(name) != -1){
+                        return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            },
+            //清除cookie
+            clearCookie: function () {
+                this.setCookie("username", "", -1);
+            },
+            checkCookie: function () {
+                var user = this.getCookie("username");
+                if (user != "") {
+                    alert("Welcome again " + user);
+                } else {
+                    user = prompt("Please enter your name:", "");
+                    if (user != "" && user != null) {
+                        this.setCookie("username", user, 365);
+                    }
+                }
+            }
+        },
+        data() {
+            return {
+                host: '',
+                radio: '1',
+                options: [{
+                    value: 'local',
+                    label: 'local'
+                }, {
+                    value: 'remote',
+                    label: 'remote'
+                }],
+                value1:"local",
+                spanArray: [],
+                tabindex: 0,
+                newTable: [],
+                tableData: [{
+                    className: "com.szz.hello.controller.HelloWord",
+                    status: "FeignBus",
+                    subField: [{
+                        fieldName: "service",
+                        label: "A",
+                        status: "FeignBus"
+                    }]
+                }]
+            }
+        },
+        flushData(){
+            const _this = this
+            axios.get('http://localhost:8181/print').then(function (response) {
+                _this.tableData = response.data
+                let data = response.data
+                _this.newTable = _this.handleTableData(data, _this)
+                console.log(_this.newTable)
+            })
+        },
+        created: function () {
+            const _this = this
+            let showcookie = _this.getCookie('host');
+            if (showcookie == "" || showcookie == null){
+                let host = prompt("请输入一段文字");
+                if (host != ""){
+                    _this.host = host;
+                }
+                _this.setCookie('host',showcookie,7)
+            }
+            axios.get(_this.host+'/print').then(function (response) {
+                _this.tableData = response.data
+                let data = response.data
+                _this.newTable = _this.handleTableData(data, _this)
+                console.log(_this.newTable)
+            })
+        },
+
+    }
+</script>
