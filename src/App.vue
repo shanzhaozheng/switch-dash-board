@@ -1,8 +1,5 @@
 <template>
     <dev>
-        <dev border style="width: 100%">
-            <el-input v-model="myLabel" @input="change($event)" placeholder="请输要切换的标签" style="width: 150px"></el-input>
-        </dev>
         <dev style="padding: 10px">
             <el-input v-model="myLabel" @input="change($event)" placeholder="请输要切换的标签" style="width: 150px"></el-input>
             <el-select v-model="value1" placeholder="请选择">
@@ -14,6 +11,7 @@
                 </el-option>
             </el-select>
             <el-button type="danger" @click="handleLabel(myLabel,value1)">根据标签信息切换</el-button>
+            <el-button type="success" @click="clearCookie" plain>重新输入host地址</el-button>
         </dev>
         <el-table
                 :data="newTable"
@@ -25,7 +23,7 @@
                     prop="className"
                     label="控制器名称"
                     align="center"
-                    width="300">
+                    width="400">
             </el-table-column>
             <el-table-column
                     prop="status"
@@ -41,7 +39,7 @@
                         prop="fieldName"
                         label="字段名称"
                         align="center"
-                        width="120">
+                        width="200">
                 </el-table-column>
                 <el-table-column
                         prop="label"
@@ -80,11 +78,11 @@
         methods: {
             handleAll(doswitch){
                 if (doswitch == 1){
-                    axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
+                    axios.post(this.host+this.url+'/local/all').then(function (response) {
                         console.log(response)
                     })
                 }else if (doswitch == 2){
-                    axios.get('http://localhost:8181/switch/?flag=false').then(function (response) {
+                    axios.post(this.host+this.url+'/remote/all').then(function (response) {
                         console.log(response)
                     })
                 }
@@ -96,20 +94,27 @@
             handleLabel(label,doswitch){
                 console.log(label)
                 console.log(doswitch)
-                /*axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
-                    console.log(response)
-                })*/
+                if (doswitch == "local"){
+                    axios.post(this.host+this.url+'/local/'+label).then(function (response) {
+                        console.log(response)
+                    })
+                }else if (doswitch == "remote"){
+                    axios.post(this.host+this.url+'/remote/'+label).then(function (response) {
+                        console.log(response)
+                    })
+                }
                 location.reload()
-
             },
             handleClick(row) {
                 console.log(row);
+                let className = row.className;
+                let fieldName = row.fieldName;
                 if (row.field_status == "FeignBus") {
-                    axios.get('http://localhost:8181/switch/?flag=true').then(function (response) {
+                    axios.post(this.host+this.url+'/local/target/'+className+'/'+fieldName).then(function (response) {
                         console.log(response)
                     })
                 } else if (row.field_status == "LocalBus") {
-                    axios.get('http://localhost:8181/switch/?flag=false').then(function (response) {
+                    axios.post(this.host+this.url+'/remote/target/'+className+'/'+fieldName).then(function (response) {
                         console.log(response)
                     })
                 }
@@ -182,7 +187,9 @@
             },
             //清除cookie
             clearCookie: function () {
-                this.setCookie("username", "", -1);
+                this.setCookie("host", "", -1);
+                location.reload()
+
             },
             checkCookie: function () {
                 var user = this.getCookie("username");
@@ -199,6 +206,7 @@
         data() {
             return {
                 host: '',
+                url: '/api/course/switch',
                 radio: '1',
                 options: [{
                     value: 'local',
@@ -222,26 +230,18 @@
                 }]
             }
         },
-        flushData(){
-            const _this = this
-            axios.get('http://localhost:8181/print').then(function (response) {
-                _this.tableData = response.data
-                let data = response.data
-                _this.newTable = _this.handleTableData(data, _this)
-                console.log(_this.newTable)
-            })
-        },
         created: function () {
             const _this = this
             let showcookie = _this.getCookie('host');
             if (showcookie == "" || showcookie == null){
                 let host = prompt("请输入一段文字");
                 if (host != ""){
-                    _this.host = host;
+                    showcookie = host;
                 }
                 _this.setCookie('host',showcookie,7)
             }
-            axios.get(_this.host+'/print').then(function (response) {
+            _this.host = showcookie;
+            axios.get(_this.host+_this.url+'/print').then(function (response) {
                 _this.tableData = response.data
                 let data = response.data
                 _this.newTable = _this.handleTableData(data, _this)
