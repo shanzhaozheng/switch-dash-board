@@ -76,30 +76,30 @@
 
     export default {
         methods: {
-            handleAll(doswitch){
-                if (doswitch == 1){
-                    axios.post(this.host+this.url+'/local/all').then(function (response) {
+            handleAll(doswitch) {
+                if (doswitch == 1) {
+                    axios.post(this.host + this.url + '/local/all').then(function (response) {
                         console.log(response)
                     })
-                }else if (doswitch == 2){
-                    axios.post(this.host+this.url+'/remote/all').then(function (response) {
+                } else if (doswitch == 2) {
+                    axios.post(this.host + this.url + '/remote/all').then(function (response) {
                         console.log(response)
                     })
                 }
                 location.reload()
             },
-            change(e){
+            change(e) {
                 this.$forceUpdate()
             },
-            handleLabel(label,doswitch){
+            handleLabel(label, doswitch) {
                 console.log(label)
                 console.log(doswitch)
-                if (doswitch == "local"){
-                    axios.post(this.host+this.url+'/local/'+label).then(function (response) {
+                if (doswitch == "local") {
+                    axios.post(this.host + this.url + '/local/' + label).then(function (response) {
                         console.log(response)
                     })
-                }else if (doswitch == "remote"){
-                    axios.post(this.host+this.url+'/remote/'+label).then(function (response) {
+                } else if (doswitch == "remote") {
+                    axios.post(this.host + this.url + '/remote/' + label).then(function (response) {
                         console.log(response)
                     })
                 }
@@ -110,24 +110,40 @@
                 let className = row.className;
                 let fieldName = row.fieldName;
                 if (row.field_status == "FeignBus") {
-                    axios.post(this.host+this.url+'/local/target/'+className+'/'+fieldName).then(function (response) {
+                    axios.post(this.host + this.url + '/local/target/' + className + '/' + fieldName).then(function (response) {
                         console.log(response)
                     })
                 } else if (row.field_status == "LocalBus") {
-                    axios.post(this.host+this.url+'/remote/target/'+className+'/'+fieldName).then(function (response) {
+                    axios.post(this.host + this.url + '/remote/target/' + className + '/' + fieldName).then(function (response) {
                         console.log(response)
                     })
                 }
                 location.reload()
             },
-            arraySpanMethod({row, column, rowIndex, columnIndex}) {
+            arraySpanMethod2({row, column, rowIndex, columnIndex}) {
                 const _this = this
                 if (columnIndex === 0 || columnIndex === 1) {
                     let _row = _this.spanArray[rowIndex];
                     let _clo = _row > 0 ? 1 : 0;
                     return {
                         rowspan: _row,
-                        colspan: _clo
+                        colspan: 1
+                    }
+                }
+            },
+            arraySpanMethod({row, column, rowIndex, columnIndex}) {
+                const _this = this
+                if (columnIndex === 0 || columnIndex === 1) {
+                    if (_this.spanArray[rowIndex] > 0) {
+                        return {
+                            rowspan: _this.spanArray[rowIndex],
+                            colspan: 1
+                        };
+                    }else {
+                        return {
+                            rowspan: 0,
+                            colspan: 0
+                        }
                     }
                 }
             },
@@ -144,8 +160,9 @@
                         }
                         newArr.push(current)
                     }
+                    _this.spanArray.push(item.subField.length)
                 })
-                newArr.forEach(function (item, index) {
+                /*newArr.forEach(function (item, index) {
                     if (index == 0) {
                         _this.spanArray.push(1)
                         _this.tabindex = 0;
@@ -158,7 +175,7 @@
                             _this.tabindex = index;
                         }
                     }
-                })
+                })*/
                 console.log(_this.spanArray)
                 return newArr;
             },
@@ -179,7 +196,7 @@
                     var c = ca[i];
                     console.log(c)
                     while (c.charAt(0) == ' ') c = c.substring(1);
-                    if (c.indexOf(name) != -1){
+                    if (c.indexOf(name) != -1) {
                         return c.substring(name.length, c.length);
                     }
                 }
@@ -215,9 +232,8 @@
                     value: 'remote',
                     label: 'remote'
                 }],
-                value1:"local",
+                value1: "local",
                 spanArray: [],
-                tabindex: 0,
                 newTable: [],
                 tableData: [{
                     className: "com.szz.hello.controller.HelloWord",
@@ -233,15 +249,15 @@
         created: function () {
             const _this = this
             let showcookie = _this.getCookie('host');
-            if (showcookie == "" || showcookie == null){
+            if (showcookie == "" || showcookie == null) {
                 let host = prompt("请输入一段文字");
-                if (host != ""){
+                if (host != "") {
                     showcookie = host;
                 }
-                _this.setCookie('host',showcookie,7)
+                _this.setCookie('host', showcookie, 7)
             }
             _this.host = showcookie;
-            axios.get(_this.host+_this.url+'/print').then(function (response) {
+            axios.get(_this.host + _this.url + '/print').then(function (response) {
                 _this.tableData = response.data
                 let data = response.data
                 _this.newTable = _this.handleTableData(data, _this)
