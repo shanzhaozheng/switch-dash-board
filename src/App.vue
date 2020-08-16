@@ -120,21 +120,10 @@
                 }
                 location.reload()
             },
-            arraySpanMethod2({row, column, rowIndex, columnIndex}) {
-                const _this = this
-                if (columnIndex === 0 || columnIndex === 1) {
-                    let _row = _this.spanArray[rowIndex];
-                    let _clo = _row > 0 ? 1 : 0;
-                    return {
-                        rowspan: _row,
-                        colspan: 1
-                    }
-                }
-            },
             arraySpanMethod({row, column, rowIndex, columnIndex}) {
                 const _this = this
                 if (columnIndex === 0 || columnIndex === 1) {
-                    if (_this.spanArray[rowIndex] > 0) {
+                    if (row.flag === 0) {
                         return {
                             rowspan: _this.spanArray[rowIndex],
                             colspan: 1
@@ -145,37 +134,43 @@
                             colspan: 0
                         }
                     }
+                }else{
+                    return {
+                        rowspan: 1,
+                        colspan: 1
+                    }
                 }
             },
             handleTableData(data, _this) {
                 let newArr = [];
                 data.forEach(function (item, index) {
                     for (let i = 0; i < item.subField.length; i++) {
-                        let current = {
-                            className: item.className,
-                            status: item.status,
-                            fieldName: item.subField[i].fieldName,
-                            label: item.subField[i].label,
-                            field_status: item.subField[i].status,
+                        let current;
+                        if (i === 0){
+                            current = {
+                                className: item.className,
+                                status: item.status,
+                                fieldName: item.subField[i].fieldName,
+                                label: item.subField[i].label,
+                                field_status: item.subField[i].status,
+                                flag: 0
+                            }
+                            _this.spanArray.push(item.subField.length)
+                        }else {
+                            current = {
+                                className: item.className,
+                                status: item.status,
+                                fieldName: item.subField[i].fieldName,
+                                label: item.subField[i].label,
+                                field_status: item.subField[i].status,
+                                flag: 1
+                            }
+                            _this.spanArray.push(1)
                         }
                         newArr.push(current)
                     }
-                    _this.spanArray.push(item.subField.length)
                 })
-                /*newArr.forEach(function (item, index) {
-                    if (index == 0) {
-                        _this.spanArray.push(1)
-                        _this.tabindex = 0;
-                    } else {
-                        if (item.className == newArr[index - 1].className) {
-                            _this.spanArray[item.tabindex] = _this.spanArray[item.tabindex] + 1;
-                            _this.spanArray.push(0);
-                        } else {
-                            _this.spanArray.push(1);
-                            _this.tabindex = index;
-                        }
-                    }
-                })*/
+
                 console.log(_this.spanArray)
                 return newArr;
             },
